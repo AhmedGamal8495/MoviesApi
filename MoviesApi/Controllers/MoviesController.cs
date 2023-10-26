@@ -93,6 +93,8 @@ namespace MoviesApi.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateAsync([FromForm] MovieDto dto)
         {
+            if (dto.Poster == null)
+                return BadRequest("Poster is Required .. !");
 
             if (!_allowedExtentions.Contains(Path.GetExtension(dto.Poster.FileName).ToLower()))
                 return BadRequest("Only Jpg or Png images Allowed !!");
@@ -123,6 +125,49 @@ namespace MoviesApi.Controllers
             };
 
             await _context.Movies.AddAsync(movie);
+            _context.SaveChanges();
+
+            return Ok(movie);
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> UpdateAsync(int id , [FromForm] MovieDto dto)
+        {
+            var movie = await _context.Movies.FindAsync(id);
+
+            if (movie == null)
+                return BadRequest("Movie Not Found ..! ");
+
+            var isvalidGenra = await _context.Genras.AnyAsync(g => g.Id == dto.GenraId);
+
+            if (!isvalidGenra)
+                return BadRequest("Invalid Genra ID ..!");
+
+            if (dto.Poster != null)
+            {
+                if (!_allowedExtentions.Contains(Path.GetExtension(dto.Poster.FileName).ToLower()))
+                    return BadRequest("Only Jpg or Png images Allowed !!");
+
+
+                if (dto.Poster.Length > _maxAllowedPosterSize)
+                    return BadRequest("Max Length is 1Mb ");
+
+                using var datastrem = new MemoryStream();
+
+                await dto.Poster.CopyToAsync(datastrem);
+
+                movie.Poster = datastrem.ToArray();
+            }
+
+           
+
+
+            movie.GenraId = dto.GenraId;
+            movie.Title = dto.Title;
+            movie.Year = dto.Year;
+            movie.StoryLine = dto.StoryLine;
+            movie.Rate = dto.Rate;
+
             _context.SaveChanges();
 
             return Ok(movie);

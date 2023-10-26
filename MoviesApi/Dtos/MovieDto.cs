@@ -13,7 +13,7 @@ namespace MoviesApi.Dtos
 
         public double Rate { get; set; }
 
-        public IFormFile Poster { get; set; }
+        public IFormFile? Poster { get; set; }
 
         public byte GenraId { get; set; }
 
